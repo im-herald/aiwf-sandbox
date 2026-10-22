@@ -1,0 +1,27 @@
+{
+  "schema": "aiwf.project.v2",
+  "project": { "name": "slugkit", "stack": "python" },
+  "spec": { "files": ["SPEC.md"], "criteria_pattern": "^- (AC-\\d+):" },
+  "standards": { "files": ["CODING_STANDARDS.md"], "rule_pattern": "^- (STD-\\d+):" },
+  "paths": { "source": ["slugkit/**"], "tests": ["tests/**", "tests_release/**"] },
+  "tdd": { "required_for": ["slugkit/**"] },
+  "tests": {
+    "isolation": "snapshot",
+    "dev_command": "python -m unittest discover -s tests -t . -v",
+    "setup": [],
+    "disturbed_exit_codes": [],
+    "allow_skipped": 0,
+    "tiers": {
+      "commit": [
+        { "name": "unit", "command": ["python", "-m", "unittest", "-v", "{file}"], "parser": "unittest", "inventory": { "mode": "files", "globs": ["tests/test_*.py"] }, "env": { "PYTHONDONTWRITEBYTECODE": "1" }, "timeout_s": 300 }
+      ],
+      "full": [
+        { "name": "unit", "command": ["python", "-m", "unittest", "-v", "{file}"], "parser": "unittest", "inventory": { "mode": "files", "globs": ["tests/test_*.py"] }, "env": { "PYTHONDONTWRITEBYTECODE": "1" }, "timeout_s": 300 },
+        { "name": "release", "command": ["python", "-m", "unittest", "-v", "{file}"], "parser": "unittest", "inventory": { "mode": "files", "globs": ["tests_release/test_*.py"] }, "env": { "PYTHONDONTWRITEBYTECODE": "1" }, "timeout_s": 300 }
+      ]
+    }
+  },
+  "e2e": { "available": true, "reason": "CLI end-to-end is covered by running python -m slugkit in the unit tier when the spec requires it" },
+  "risk": { "high": [], "high_risk_requires_tier": "full" },
+  "relevant_untracked": "block"
+}
