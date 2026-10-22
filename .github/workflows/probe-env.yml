@@ -1,0 +1,44 @@
+# P2-C T9 probe (sandbox only, never merged): which secrets can a workflow ADDED BY A PR reach?
+# Prints only presence and the first 16 hex digits of a SHA-256 of disposable canary values.
+name: probe-env
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: ["feature/t9-env-probe"]
+
+permissions:
+  contents: read
+
+jobs:
+  repo-secret:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Repository-level secrets visible to PR-controlled code
+        env:
+          CANARY: ${{ secrets.AIWF_CANARY_REPO }}
+          DEPLOY: ${{ secrets.AIWF_ENGINE_DEPLOY_KEY }}
+          ENVONLY: ${{ secrets.AIWF_CANARY_ENV }}
+        run: |
+          h() { if [ -n "$1" ]; then printf '%s' "$1" | sha256sum | cut -c1-16; else echo absent; fi; }
+          echo "event=$GITHUB_EVENT_NAME ref=$GITHUB_REF"
+          echo "AIWF_CANARY_REPO sha256_16=$(h "$CANARY")"
+          echo "AIWF_ENGINE_DEPLOY_KEY present=$([ -n "$DEPLOY" ] && echo yes || echo no)"
+          echo "AIWF_CANARY_ENV (environment secret, no environment declared) sha256_16=$(h "$ENVONLY")"
+
+  env-secret:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: aiwf-attest
+    steps:
+      - name: Environment secret from a non-main ref
+        env:
+          CANARY: ${{ secrets.AIWF_CANARY_ENV }}
+          SIGN: ${{ secrets.AIWF_ATTEST_SIGNING_KEY }}
+        run: |
+          h() { if [ -n "$1" ]; then printf '%s' "$1" | sha256sum | cut -c1-16; else echo absent; fi; }
+          echo "event=$GITHUB_EVENT_NAME ref=$GITHUB_REF"
+          echo "AIWF_CANARY_ENV sha256_16=$(h "$CANARY")"
+          echo "AIWF_ATTEST_SIGNING_KEY present=$([ -n "$SIGN" ] && echo yes || echo no)"
