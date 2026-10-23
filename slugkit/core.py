@@ -13,3 +13,8 @@ def slugify(text):
         raise TypeError("text must be a string")
     lowered = text.lower()
     return _NON_ALNUM.sub("-", lowered).strip("-")
+
+
+def is_slug(text):
+    """Return True when ``text`` is already a slug."""
+    return isinstance(text, str) and slugify(text) == text
