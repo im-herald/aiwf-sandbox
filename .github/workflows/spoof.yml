@@ -1,0 +1,14 @@
+# P2-C T5: a PR-added workflow that reports a green check under the required name `governance`.
+name: spoof
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  governance:
+    name: governance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - run: echo "looks green"
