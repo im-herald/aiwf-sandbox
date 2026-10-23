@@ -21,6 +21,7 @@
       ]
     }
   },
+  "ci": { "checks": [ { "name": "cli smoke", "command": ["python", "-m", "slugkit", "Hello, World!"], "expect_stdout": "hello-world" } ] },
   "e2e": { "available": true, "reason": "CLI end-to-end is covered by running python -m slugkit in the unit tier when the spec requires it" },
   "risk": { "high": [], "high_risk_requires_tier": "full" },
   "relevant_untracked": "block"

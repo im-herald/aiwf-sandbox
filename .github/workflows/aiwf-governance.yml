@@ -1,0 +1,50 @@
+# AIWF governance check (RENDERED by `aiwf ci render`; P2-C final architecture).
+# Runs the BASE-branch copy of this file (pull_request_target): a PR cannot change it for itself.
+# No checkout and no PR code: only the GitHub API lists the changed files. No secrets.
+# Fails when a governance path changes, unless the owner applied the label aiwf-governance-approved;
+# every new push to the PR removes the label, so approval always refers to the current head.
+# Governance paths (owner policy): .aiwf/**, .claude/**, .gitattributes, .githooks/**, .github/**, CODEOWNERS, aiwf.project.json
+name: aiwf-governance
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aiwf-governance-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  governance:
+    name: governance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Governance paths changed by this PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          ACTION: ${{ github.event.action }}
+          LABEL: aiwf-governance-approved
+          PATTERN: "^\\.aiwf/.*$|^\\.claude/.*$|^\\.gitattributes$|^\\.githooks/.*$|^\\.github/.*$|^CODEOWNERS$|^aiwf\\.project\\.json$"
+        run: |
+          set -euo pipefail
+          if [ "$ACTION" = "synchronize" ]; then
+            if gh api -X DELETE "repos/$REPO/issues/$PR/labels/$LABEL" >/dev/null 2>&1; then echo "new push: removed $LABEL (approval must refer to the current head)"; fi
+          fi
+          changed="$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[] | .filename, (.previous_filename // empty)')"
+          gov="$(printf '%s\n' "$changed" | grep -E "$PATTERN" || true)"
+          if [ -z "$gov" ]; then echo "no governance path changed"; exit 0; fi
+          echo "governance paths changed:"; printf '%s\n' "$gov"
+          labels="$(gh api "repos/$REPO/issues/$PR/labels" --jq '.[].name')"
+          if printf '%s\n' "$labels" | grep -qx "$LABEL"; then echo "owner approval label present for the current head"; exit 0; fi
+          echo "::error::governance paths changed; owner review required (label $LABEL)"
+          exit 1
