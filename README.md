@@ -10,3 +10,7 @@ slug helper) is synthetic test material and is not used anywhere.
 
 Pull requests are reviewed and verified by the `aiwf-ci` and `aiwf-review` workflows; merging into
 `main` is done by the repository owner only.
+
+## Contributing
+
+Open a pull request against `main`; the repository owner merges.
