@@ -18,5 +18,20 @@ class SlugifyTests(unittest.TestCase):
             slugify(42)
 
 
+class SlugifyMaxLengthTests(unittest.TestCase):
+    def test_cuts_at_last_hyphen_within_limit(self):
+        self.assertEqual(slugify("hello big world", max_length=11), "hello-big")
+
+    def test_hard_cuts_when_no_hyphen_within_limit(self):
+        self.assertEqual(slugify("Supercalifragilistic word", max_length=5), "super")
+
+    def test_rejects_invalid_max_length(self):
+        for bad in (0, -3, "5", 2.5):
+            with self.subTest(max_length=bad):
+                with self.assertRaises(ValueError) as ctx:
+                    slugify("hello", max_length=bad)
+                self.assertEqual(str(ctx.exception), "max_length must be a positive integer")
+
+
 if __name__ == "__main__":
     unittest.main()
